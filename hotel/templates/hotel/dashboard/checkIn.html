@@ -1,0 +1,184 @@
+<h1 class="page-header">Check In</h1>
+
+<h2 class="sub-header">房间信息</h2>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>select</th>
+                <th>#</th>
+                <th>房间类型</th>
+                <th>房间状态</th>
+                <th>check in</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for info in infos %}
+            {% ifnotequal info.roomCondition 'sold' %}
+                <tr>
+                    <td></td>
+                    <td>{{ info.roomId }}</td>
+                    <td>{{ info.roomType }}</td>
+                    <td>{{ info.roomCondition }}</td>
+                    <td><button type="button" class="btn btn-primary" data-toggle="modal" data-target="#orderModal" data-whatever={{ info.roomId }}>check in</button></td>
+                </tr>
+            {% endifnotequal %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% ifnotequal info.roomCondition 'reserved' %}
+    <div class="modal fade" id="orderModal" tabindex="-1" role="dialog" aria-labelledby="orderModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="orderModalLabel">Order</h4>
+          </div>
+          <form class="form-signin" action="{% url 'hotel:checkIn' %}" method="POST">
+              {% csrf_token %}
+              <div class="modal-body">
+                  {% for field in form %}
+                      <div class="form-group">
+                          <label for={{ field.label }} class="control-label">{{ field.label }}:</label>
+                          {{ field }}
+                          {% for error in field.errors %}
+                            <p style="margin-bottom:0px">{{ error }}</p>
+                          {% endfor %}
+                      </div>
+                  {% endfor %}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Send message</button>
+              </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="modal fade" id="orderModal" tabindex="-1" role="dialog" aria-labelledby="orderModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="orderModalLabel">Order</h4>
+          </div>
+          <form class="form-signin" action="{% url 'hotel:checkIn' %}" method="POST">
+              {% csrf_token %}
+              <div class="modal-body">
+                  {% for field in form %}
+                      <div class="form-group">
+                          <label for={{ field.label }} class="control-label">{{ field.label }}:</label>
+                          {{ field }}
+                          {% for error in field.errors %}
+                            <p style="margin-bottom:0px">{{ error }}</p>
+                          {% endfor %}
+                      </div>
+                  {% endfor %}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Send message</button>
+              </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endifnotequal %}
+
+</div>
+
+
+
+</div>
+</div>
+</div>
+
+
+
+    <script src="/static/bootstrap/jquery.min.js"></script>
+    <script src="/static/datetimepicker/js/bootstrap-datetimepicker.min.js"></script>
+    <script src="/static/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js "></script>
+
+    <script>
+    $(document).ajaxSend(function(event, xhr, settings) {
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+      function sameOrigin(url) {
+          // url could be relative or scheme relative or absolute
+          var host = document.location.host; // host + port
+          var protocol = document.location.protocol;
+          var sr_origin = '//' + host;
+          var origin = protocol + sr_origin;
+          // Allow absolute or scheme relative URLs to same origin
+          return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+              (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+              // or any other URL that isn't scheme relative or absolute i.e relative.
+              !(/^(\/\/|http:|https:).*/.test(url));
+          }
+          function safeMethod(method) {
+              return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+          }
+
+          if (!safeMethod(settings.type) && sameOrigin(settings.url)) {
+              xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+          }
+      });
+      </script>
+
+    <script>
+        $('#orderModal').on('shown.bs.modal', function (event) {
+            $('#id_name').focus()
+            var button = $(event.relatedTarget)
+            var roomId = button.data('whatever')
+            $('#id_roomId').val(roomId)
+            $.post("/hotel/returnCheckInInfo/",
+            { roomId: roomId },
+                function(data){
+                    jsonData = eval("("+data+")");
+                    $('#id_name').val(jsonData['clientName'])
+                    $('#id_phone').val(jsonData['clientPhone'])
+                    $('#id_checkInDate').val(jsonData['checkInDate'])
+                    $('#id_checkOutDate').val(jsonData['checkOutDate'])
+                }
+            );
+        });
+    </script>
+
+    <script>
+        $('#id_checkInDate').datetimepicker({
+            language:  'zh-CN',
+            weekStart: 1,
+            todayBtn:  1,
+            autoclose: 1,
+            todayHighlight: 1,
+            startView: 2,
+            minView: 2,
+            forceParse: 0
+        });
+
+        $('#id_checkOutDate').datetimepicker({
+            language:  'zh-CN',
+            weekStart: 1,
+            todayBtn:  1,
+            autoclose: 1,
+            todayHighlight: 1,
+            startView: 2,
+            minView: 2,
+            forceParse: 0
+        });
+    </script>

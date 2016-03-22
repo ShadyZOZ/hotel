@@ -1,0 +1,103 @@
+<h1 class="page-header">Reservation</h1>
+
+<h2 class="sub-header">房间信息</h2>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>select</th>
+                <th>#</th>
+                <th>房间类型</th>
+                <th>房间状态</th>
+                <th>reservation</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for info in infos %}
+            {% ifequal info.roomCondition 'available' %}
+                <tr>
+                    <td></td>
+                    <td>{{ info.roomId }}</td>
+                    <td>{{ info.roomType }}</td>
+                    <td>{{ info.roomCondition }}</td>
+                    <td><button type="button" class="btn btn-success" data-toggle="modal" data-target="#reserveModal" data-whatever={{ info.roomId }}>reserve</button></td>
+                </tr>
+            {% endifequal %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+    <div class="modal fade" id="reserveModal" tabindex="-1" role="dialog" aria-labelledby="reserveModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="reserveModalLabel">Reservation</h4>
+          </div>
+          <form class="form-signin" action="{% url 'hotel:reservation' %}" method="POST">
+              {% csrf_token %}
+              <div class="modal-body">
+                  {% for field in form %}
+                      <div class="form-group">
+                          <label for={{ field.label }} class="control-label">{{ field.label }}:</label>
+                          {{ field }}
+                          {% for error in field.errors %}
+                            <p style="margin-bottom:0px">{{ error }}</p>
+                          {% endfor %}
+                      </div>
+                  {% endfor %}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Send message</button>
+              </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+</div>
+
+
+
+</div>
+</div>
+</div>
+
+
+
+    <script src="/static/bootstrap/jquery.min.js"></script>
+    <script src="/static/datetimepicker/js/bootstrap-datetimepicker.min.js"></script>
+    <script src="/static/datetimepicker/js/locales/bootstrap-datetimepicker.zh-CN.js "></script>
+
+    <script>
+        $('#reserveModal').on('shown.bs.modal', function (event) {
+            $('#id_name').focus()
+            var button = $(event.relatedTarget)
+            var roomId = button.data('whatever')
+            $('#id_roomId').val(roomId)
+        })
+
+        $('#id_checkInDate').datetimepicker({
+            language:  'zh-CN',
+            weekStart: 1,
+            todayBtn:  1,
+            autoclose: 1,
+            todayHighlight: 1,
+            startView: 2,
+            minView: 2,
+            forceParse: 0
+        });
+
+        $('#id_checkOutDate').datetimepicker({
+            language:  'zh-CN',
+            weekStart: 1,
+            todayBtn:  1,
+            autoclose: 1,
+            todayHighlight: 1,
+            startView: 2,
+            minView: 2,
+            forceParse: 0
+        });
+    </script>

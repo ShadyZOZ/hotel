@@ -1,0 +1,300 @@
+<h1 class="page-header">Overview</h1>
+
+<div class="row placeholders">
+    <div class="col-xs-6 col-sm-3 placeholder">
+        <canvas id="chartDanjian" width="200" height="200" ></canvas>
+        <h4>单间</h4>
+        <span class="text-muted"></span>
+    </div>
+    <div class="col-xs-6 col-sm-3 placeholder">
+        <canvas id="chartBiaojian" width="200" height="200" ></canvas>
+        <h4>标间</h4>
+        <span class="text-muted"></span>
+    </div>
+    <div class="col-xs-6 col-sm-3 placeholder">
+        <canvas id="chartTaojian" width="200" height="200" ></canvas>
+        <h4>套间</h4>
+        <span class="text-muted"></span>
+    </div>
+    <div class="col-xs-6 col-sm-3 placeholder">
+        <canvas id="chartTotal" width="200" height="200" ></canvas>
+        <h4>总房间</h4>
+        <span class="text-muted"></span>
+    </div>
+</div>
+
+<h2 class="sub-header">房间信息</h2>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>房间类型</th>
+                <th>房间状态</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for info in infos %}
+                <tr>
+                    <td><a data-toggle="modal" data-target="#roomInfoModal" data-whatever={{ info.roomId }}>{{ info.roomId }}</a></td>
+                    <td>{{ info.roomType }}</td>
+                    <td>{{ info.roomCondition }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="roomInfoModal" tabindex="-1" role="dialog" aria-labelledby="roomInfoModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="link" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="roomInfoModalLabel">roomId</h4>
+      </div>
+      <div class="modal-body">
+        <h4 id="roomId">房间号: </h4>
+        <h4 id="roomType">房间类型: </h4>
+        <h4 id="roomCondition">房间状态: </h4>
+        <h4 id="roomPrice">房间价格: </h4>
+        <h4 id="checkInDate">入住时间: </h4>
+        <h4 id="checkOutDate">离开时间: </h4>
+        <h4 id="clientName">姓名: </h4>
+        <h4 id="clientPhone">手机: </h4>
+        <h4 id="clientIdNumber">身份证号: </h4>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">Send message</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+</div>
+</div>
+
+    <script src="/static/bootstrap/jquery.min.js"></script>
+    <script src="/static/chart/Chart.min.js"></script>
+
+    <script>
+    $(document).ajaxSend(function(event, xhr, settings) {
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+      function sameOrigin(url) {
+          // url could be relative or scheme relative or absolute
+          var host = document.location.host; // host + port
+          var protocol = document.location.protocol;
+          var sr_origin = '//' + host;
+          var origin = protocol + sr_origin;
+          // Allow absolute or scheme relative URLs to same origin
+          return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+              (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+              // or any other URL that isn't scheme relative or absolute i.e relative.
+              !(/^(\/\/|http:|https:).*/.test(url));
+          }
+          function safeMethod(method) {
+              return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+          }
+
+          if (!safeMethod(settings.type) && sameOrigin(settings.url)) {
+              xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+          }
+      });
+      </script>
+
+    <script>
+        $('#roomInfoModal').on('shown.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var roomId = button.data('whatever');
+            $.post("/hotel/returnRoomInfo/",
+              { roomId: roomId },
+              function(data){
+                jsonData = eval("("+data+")");
+                // alert(jsonData['days']);
+                $('#roomId').text('房间号: ' + jsonData['roomId'])
+                $('#roomType').text('房间类型: ' + jsonData['roomType'])
+                $('#roomCondition').text('房间状态: ' + jsonData['roomCondition'])
+                $('#roomPrice').text('房间价格: ' + jsonData['roomPrice'])
+                $('#checkInDate').text('入住时间: ' + jsonData['checkInDate'])
+                $('#checkOutDate').text('离开时间: ' + jsonData['checkOutDate'])
+                $('#clientName').text('姓名: ' + jsonData['clientName'])
+                $('#clientPhone').text('手机: ' + jsonData['clientPhone'])
+                $('#clientIdNumber').text('身份证号: ' + jsonData['clientIdNumber'])
+              }
+            );
+        });
+
+        var danjianAvailable = 0;
+        var danjianReserved = 0;
+        var danjianSold = 0;
+        var biaojianAvailable = 0;
+        var biaojianReserved = 0;
+        var biaojianSold = 0;
+        var taojianAvailable = 0;
+        var taojianReserved = 0;
+        var taojianSold = 0;
+
+        {% for info in infos %}
+            if ("{{ info.roomType }}" == "单间")
+            {
+                if ("{{ info.roomCondition }}" == "available")
+                {
+                    danjianAvailable++;
+                }
+                else if ("{{ info.roomCondition }}" == "reserved")
+                {
+                    danjianReserved++;
+                }
+                else
+                {
+                    danjianSold++;
+                }
+            }
+            else if ("{{ info.roomType }}" == "标间")
+            {
+                if ("{{ info.roomCondition }}" == "available")
+                {
+                    biaojianAvailable++;
+                }
+                else if ("{{ info.roomCondition }}" == "reserved")
+                {
+                    biaojianReserved++;
+                }
+                else
+                {
+                    biaojianSold++;
+                }
+            }
+            else
+            {
+                if ("{{ info.roomCondition }}" == "available")
+                {
+                    taojianAvailable++;
+                }
+                else if ("{{ info.roomCondition }}" == "reserved")
+                {
+                    taojianReserved++;
+                }
+                else
+                {
+                    taojianSold++;
+                }
+            }
+        {% endfor %}
+
+        var totalAvailable = danjianAvailable + biaojianAvailable + taojianAvailable;
+        var totalReserved = danjianReserved + biaojianReserved + taojianReserved;
+        var totalSold = danjianSold+ biaojianSold + taojianSold;
+
+        var danjianData = [
+            {
+                value: danjianSold,
+                color: "#F7464A",
+                highlight: "#FF5A5E",
+                label: "入住"
+            },
+            {
+                value: danjianAvailable,
+                color: "#46BFBD",
+                highlight: "#5AD3D1",
+                label: "空房"
+            },
+            {
+                value: danjianReserved,
+                color: "#FDB45C",
+                highlight: "#FFC870",
+                label: "已预定"
+            }
+        ];
+
+        var biaojianData = [
+            {
+                value: biaojianSold,
+                color: "#F7464A",
+                highlight: "#FF5A5E",
+                label: "入住"
+            },
+            {
+                value: biaojianAvailable,
+                color: "#46BFBD",
+                highlight: "#5AD3D1",
+                label: "空房"
+            },
+            {
+                value: biaojianReserved,
+                color: "#FDB45C",
+                highlight: "#FFC870",
+                label: "已预定"
+            }
+        ];
+
+        var taojianData = [
+            {
+                value: taojianSold,
+                color: "#F7464A",
+                highlight: "#FF5A5E",
+                label: "入住"
+            },
+            {
+                value: taojianAvailable,
+                color: "#46BFBD",
+                highlight: "#5AD3D1",
+                label: "空房"
+            },
+            {
+                value: taojianReserved,
+                color: "#FDB45C",
+                highlight: "#FFC870",
+                label: "已预定"
+            }
+        ];
+
+        var totalData = [
+            {
+                value: totalSold,
+                color: "#F7464A",
+                highlight: "#FF5A5E",
+                label: "入住"
+            },
+            {
+                value: totalAvailable,
+                color: "#46BFBD",
+                highlight: "#5AD3D1",
+                label: "空房"
+            },
+            {
+                value: totalReserved,
+                color: "#FDB45C",
+                highlight: "#FFC870",
+                label: "已预定"
+            }
+        ];
+
+        window.onload = function(){
+            var ctxDanjian = $("#chartDanjian").get(0).getContext("2d");
+            var ctxBiaojian = $("#chartBiaojian").get(0).getContext("2d");
+            var ctxTaojian = $("#chartTaojian").get(0).getContext("2d");
+            var ctxTotal= $("#chartTotal").get(0).getContext("2d");
+            window.newChartDanjian = new Chart(ctxDanjian).Pie(danjianData, {animation: false});
+            window.newChartBiaojian = new Chart(ctxBiaojian).Pie(biaojianData, {animation: false});
+            window.newChartTaojian = new Chart(ctxTaojian).Pie(taojianData, {animation: false});
+            window.newChartTotal = new Chart(ctxTotal).Pie(totalData, {animation: false});
+        };
+
+    </script>

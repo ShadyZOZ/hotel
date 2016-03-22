@@ -1,0 +1,129 @@
+<h1 class="page-header">Check Out</h1>
+
+<h2 class="sub-header">房间信息</h2>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>select</th>
+                <th>#</th>
+                <th>房间类型</th>
+                <th>房间状态</th>
+                <th>check out</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for info in infos %}
+            {% ifequal info.roomCondition 'sold' %}
+                <tr>
+                    <td></td>
+                    <td>{{ info.roomId }}</td>
+                    <td>{{ info.roomType }}</td>
+                    <td>{{ info.roomCondition }}</td>
+                    <td><button type="button" class="btn btn-danger" data-toggle="modal" data-target="#checkOutModal" data-whatever={{ info.roomId }}>check out</button></td>
+                </tr>
+            {% endifequal %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+    <div class="modal fade" id="checkOutModal" tabindex="-1" role="dialog" aria-labelledby="checkOutModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="checkOutModalLabel">Check Out</h4>
+          </div>
+          <form class="form-signin" action="{% url 'hotel:checkOut' %}" method="POST">
+            {% csrf_token %}
+            <div class="modal-body">
+              {% for field in form %}
+                  <div class="form-group">
+                      <label for={{ field.label }} class="control-label">{{ field.label }}:</label>
+                      {{ field }}
+                      {% for error in field.errors %}
+                        <p style="margin-bottom:0px">{{ error }}</p>
+                      {% endfor %}
+                  </div>
+              {% endfor %}
+              <br>
+              <h4 class="text-right" id="days">入住0天</h4>
+              <br>
+              <h4 class="text-right" id="total"> 合计：0元</h4>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              <button type="submit" class="btn btn-primary">Send message</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+</div>
+
+
+
+</div>
+</div>
+</div>
+
+
+
+    <script src="/static/bootstrap/jquery.min.js"></script>
+
+    <script>
+    $(document).ajaxSend(function(event, xhr, settings) {
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+      function sameOrigin(url) {
+          // url could be relative or scheme relative or absolute
+          var host = document.location.host; // host + port
+          var protocol = document.location.protocol;
+          var sr_origin = '//' + host;
+          var origin = protocol + sr_origin;
+          // Allow absolute or scheme relative URLs to same origin
+          return (url == origin || url.slice(0, origin.length + 1) == origin + '/') ||
+              (url == sr_origin || url.slice(0, sr_origin.length + 1) == sr_origin + '/') ||
+              // or any other URL that isn't scheme relative or absolute i.e relative.
+              !(/^(\/\/|http:|https:).*/.test(url));
+          }
+          function safeMethod(method) {
+              return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+          }
+
+          if (!safeMethod(settings.type) && sameOrigin(settings.url)) {
+              xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+          }
+      });
+      </script>
+
+    <script>
+        $('#checkOutModal').on('shown.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var roomId = button.data('whatever');
+            $.post("/hotel/returnPrice/",
+            { roomId: roomId },
+                function(data){
+                    jsonData = eval("("+data+")");
+                    $('#days').text('入住' + jsonData['days'] + '天')
+                    $('#total').text('合计：' + jsonData['total'] + '元')
+                }
+            );
+            $('#id_roomId').val(roomId);
+        });
+    </script>
